@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmake --build --preset debug)",
+      "Bash(ctest --preset debug --output-on-failure)",
+      "Bash(cmake --preset release)",
+      "Bash(cmake --build --preset release)",
+      "Bash(ctest --preset release --output-on-failure)",
+      "Bash(.build/linux-clang-x64-asan/src/tests/aipp_ut --durations=on)"
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+guard_prefix=AIPP
+namespace = aipp
+auto_hash=true
+auto_ostream=true
+auto_format=true
+
+# Example strong type — wraps a 64-bit signed integer with the
+# spaceship operator for full ordered comparison support.
+[class Foo]
+description=std::int64_t; <=>
+
+# SPSC queue capacity — represents the usable capacity of the queue
+# (not including the sentinel slot).
+[class Capacity]
+description=std::size_t; <=>

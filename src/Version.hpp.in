@@ -1,0 +1,24 @@
+// ----------------------------------------------------------------------
+// Copyright 2026 Jody Hagins
+// Distributed under the MIT Software License
+// See accompanying file LICENSE or copy at
+// https://opensource.org/licenses/MIT
+// ----------------------------------------------------------------------
+#ifndef AIPP_VERSION_HPP
+#define AIPP_VERSION_HPP
+
+#define AIPP_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
+#define AIPP_VERSION_MINOR @PROJECT_VERSION_MINOR@
+#define AIPP_VERSION_PATCH @PROJECT_VERSION_PATCH@
+#define AIPP_VERSION_STRING "@PROJECT_VERSION@"
+
+namespace aipp {
+
+inline constexpr int version_major = AIPP_VERSION_MAJOR;
+inline constexpr int version_minor = AIPP_VERSION_MINOR;
+inline constexpr int version_patch = AIPP_VERSION_PATCH;
+inline constexpr char const * version_string = AIPP_VERSION_STRING;
+
+} // namespace aipp
+
+#endif // AIPP_VERSION_HPP

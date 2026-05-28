@@ -1,0 +1,221 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache"
+      },
+      "environment": {
+        "CCACHE_DIR": "${sourceDir}/.build/.ccache"
+      }
+    },
+    {
+      "name": "base-linux-x64-gcc",
+      "hidden": true,
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/.build/linux-gcc-x64",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+    {
+      "name": "base-linux-x64-clang",
+      "hidden": true,
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/.build/linux-clang-x64",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
+      "name": "base-macos-arm64-clang",
+      "hidden": true,
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/.build/macos-clang-arm64",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
+      "name": "base-windows-x64-msvc",
+      "hidden": true,
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/.build/windows-msvc-x64",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl"
+      }
+    },
+    {
+      "name": "debug-linux-gcc",
+      "displayName": "Debug Linux GCC (fast, no ASan)",
+      "inherits": "base-linux-x64-gcc",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "AIPP_SANITIZE": "OFF"
+      }
+    },
+    {
+      "name": "debug-linux-gcc-asan",
+      "displayName": "Debug Linux GCC with ASan (for CI)",
+      "inherits": "base-linux-x64-gcc",
+      "binaryDir": "${sourceDir}/.build/linux-gcc-x64-asan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "AIPP_SANITIZE": "ON"
+      }
+    },
+    {
+      "name": "debug-linux-clang",
+      "displayName": "Debug Linux Clang (ASan enabled)",
+      "inherits": "base-linux-x64-clang",
+      "binaryDir": "${sourceDir}/.build/linux-clang-x64-asan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "AIPP_SANITIZE": "ON"
+      }
+    },
+    {
+      "name": "debug-macos-clang",
+      "displayName": "Debug macOS Clang (ASan enabled)",
+      "inherits": "base-macos-arm64-clang",
+      "binaryDir": "${sourceDir}/.build/macos-clang-arm64-asan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "AIPP_SANITIZE": "ON"
+      }
+    },
+    {
+      "name": "release-linux-gcc",
+      "displayName": "Release Linux GCC (fast, no ASan)",
+      "inherits": "base-linux-x64-gcc",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "AIPP_SANITIZE": "OFF"
+      }
+    },
+    {
+      "name": "release-linux-gcc-asan",
+      "displayName": "Release Linux GCC with ASan (for CI)",
+      "inherits": "base-linux-x64-gcc",
+      "binaryDir": "${sourceDir}/.build/linux-gcc-x64-asan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "AIPP_SANITIZE": "ON"
+      }
+    },
+    {
+      "name": "release-linux-clang",
+      "displayName": "Release Linux Clang (ASan enabled)",
+      "inherits": "base-linux-x64-clang",
+      "binaryDir": "${sourceDir}/.build/linux-clang-x64-asan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "AIPP_SANITIZE": "ON"
+      }
+    },
+    {
+      "name": "release-macos-clang",
+      "displayName": "Release macOS Clang (ASan enabled)",
+      "inherits": "base-macos-arm64-clang",
+      "binaryDir": "${sourceDir}/.build/macos-clang-arm64-asan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "AIPP_SANITIZE": "ON"
+      }
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug (alias for debug-linux-clang)",
+      "inherits": "debug-linux-clang"
+    },
+    {
+      "name": "release",
+      "displayName": "Release (alias for release-linux-clang)",
+      "inherits": "release-linux-clang"
+    }
+  ],
+  "buildPresets": [
+    { "name": "debug-linux-gcc", "configurePreset": "debug-linux-gcc" },
+    { "name": "debug-linux-gcc-asan", "configurePreset": "debug-linux-gcc-asan" },
+    { "name": "debug-linux-clang", "configurePreset": "debug-linux-clang" },
+    { "name": "debug-macos-clang", "configurePreset": "debug-macos-clang" },
+    { "name": "release-linux-gcc", "configurePreset": "release-linux-gcc" },
+    { "name": "release-linux-gcc-asan", "configurePreset": "release-linux-gcc-asan" },
+    { "name": "release-linux-clang", "configurePreset": "release-linux-clang" },
+    { "name": "release-macos-clang", "configurePreset": "release-macos-clang" },
+    { "name": "debug", "configurePreset": "debug" },
+    { "name": "release", "configurePreset": "release" }
+  ],
+  "testPresets": [
+    {
+      "name": "debug-linux-gcc",
+      "configurePreset": "debug-linux-gcc",
+      "output": { "outputOnFailure": true },
+      "execution": { "jobs": 0 }
+    },
+    {
+      "name": "debug-linux-gcc-asan",
+      "configurePreset": "debug-linux-gcc-asan",
+      "output": { "outputOnFailure": true },
+      "execution": { "jobs": 0 }
+    },
+    {
+      "name": "debug-linux-clang",
+      "configurePreset": "debug-linux-clang",
+      "output": { "outputOnFailure": true },
+      "execution": { "jobs": 0 }
+    },
+    {
+      "name": "debug-macos-clang",
+      "configurePreset": "debug-macos-clang",
+      "output": { "outputOnFailure": true },
+      "execution": { "jobs": 0 }
+    },
+    {
+      "name": "release-linux-gcc",
+      "configurePreset": "release-linux-gcc",
+      "output": { "outputOnFailure": true },
+      "execution": { "jobs": 0 }
+    },
+    {
+      "name": "release-linux-gcc-asan",
+      "configurePreset": "release-linux-gcc-asan",
+      "output": { "outputOnFailure": true },
+      "execution": { "jobs": 0 }
+    },
+    {
+      "name": "release-linux-clang",
+      "configurePreset": "release-linux-clang",
+      "output": { "outputOnFailure": true },
+      "execution": { "jobs": 0 }
+    },
+    {
+      "name": "release-macos-clang",
+      "configurePreset": "release-macos-clang",
+      "output": { "outputOnFailure": true },
+      "execution": { "jobs": 0 }
+    },
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "output": { "outputOnFailure": true },
+      "execution": { "jobs": 0 }
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "output": { "outputOnFailure": true },
+      "execution": { "jobs": 0 }
+    }
+  ]
+}
