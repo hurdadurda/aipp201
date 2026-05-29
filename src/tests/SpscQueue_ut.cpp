@@ -15,8 +15,8 @@ TEST_SUITE("SpscQueue - Construction and Capacity") {
   TEST_CASE("Create queue with specified capacity") {
     aipp::SpscQueue<int> queue(aipp::Capacity(static_cast<std::size_t>(10)));
     CHECK(atlas_value_for(queue.capacity()) == 10);
-    CHECK(queue.is_empty());
-    CHECK(!queue.is_full());
+    CHECK(atlas_value_for(queue.consumer_side_is_empty()));
+    CHECK(!atlas_value_for(queue.producer_side_is_full()));
   }
 
   TEST_CASE("Different capacities") {
@@ -27,31 +27,36 @@ TEST_SUITE("SpscQueue - Construction and Capacity") {
         aipp::Capacity(static_cast<std::size_t>(100)));
     CHECK(atlas_value_for(q100.capacity()) == 100);
   }
+
+  TEST_CASE("Constructor throws for zero capacity") {
+    CHECK_THROWS(aipp::SpscQueue<int>(aipp::Capacity(static_cast<std::size_t>(0))));
+  }
 }
 
 TEST_SUITE("SpscQueue - Basic Enqueue/Dequeue") {
   TEST_CASE("Enqueue to empty queue succeeds") {
     aipp::SpscQueue<int> queue(
         aipp::Capacity(static_cast<std::size_t>(10)));
-    CHECK(queue.try_enqueue(42));
-    CHECK(!queue.is_empty());
+    auto result = queue.try_enqueue(42);
+    CHECK(atlas_value_for(result));
+    CHECK(!atlas_value_for(queue.consumer_side_is_empty()));
   }
 
   TEST_CASE("Dequeue from queue with one element") {
     aipp::SpscQueue<int> queue(
         aipp::Capacity(static_cast<std::size_t>(10)));
-    queue.try_enqueue(42);
+    (void)queue.try_enqueue(42);
     auto result = queue.try_dequeue();
     REQUIRE(result.has_value());
     CHECK(result.value() == 42);
-    CHECK(queue.is_empty());
+    CHECK(atlas_value_for(queue.consumer_side_is_empty()));
   }
 
   TEST_CASE("Enqueue and dequeue multiple elements in order") {
     aipp::SpscQueue<int> queue(
         aipp::Capacity(static_cast<std::size_t>(10)));
     for (int i = 1; i <= 5; ++i) {
-      CHECK(queue.try_enqueue(i));
+      CHECK(atlas_value_for(queue.try_enqueue(i)));
     }
 
     for (int i = 1; i <= 5; ++i) {
@@ -59,18 +64,18 @@ TEST_SUITE("SpscQueue - Basic Enqueue/Dequeue") {
       REQUIRE(result.has_value());
       CHECK(result.value() == i);
     }
-    CHECK(queue.is_empty());
+    CHECK(atlas_value_for(queue.consumer_side_is_empty()));
   }
 
   TEST_CASE("Round-robin enqueue/dequeue pattern") {
     aipp::SpscQueue<int> queue(aipp::Capacity(static_cast<std::size_t>(3)));
-    CHECK(queue.try_enqueue(1));
-    CHECK(queue.try_enqueue(2));
+    CHECK(atlas_value_for(queue.try_enqueue(1)));
+    CHECK(atlas_value_for(queue.try_enqueue(2)));
     auto v1 = queue.try_dequeue();
     REQUIRE(v1.has_value());
     CHECK(v1.value() == 1);
 
-    CHECK(queue.try_enqueue(3));
+    CHECK(atlas_value_for(queue.try_enqueue(3)));
     auto v2 = queue.try_dequeue();
     REQUIRE(v2.has_value());
     CHECK(v2.value() == 2);
@@ -78,7 +83,7 @@ TEST_SUITE("SpscQueue - Basic Enqueue/Dequeue") {
     auto v3 = queue.try_dequeue();
     REQUIRE(v3.has_value());
     CHECK(v3.value() == 3);
-    CHECK(queue.is_empty());
+    CHECK(atlas_value_for(queue.consumer_side_is_empty()));
   }
 }
 
@@ -102,7 +107,7 @@ TEST_SUITE("SpscQueue - Empty Queue Behavior") {
     aipp::SpscQueue<int> queue(
         aipp::Capacity(static_cast<std::size_t>(10)));
     CHECK(!queue.try_dequeue().has_value());
-    queue.try_enqueue(99);
+    (void)queue.try_enqueue(99);
     auto result = queue.try_dequeue();
     REQUIRE(result.has_value());
     CHECK(result.value() == 99);
@@ -112,37 +117,37 @@ TEST_SUITE("SpscQueue - Empty Queue Behavior") {
 TEST_SUITE("SpscQueue - Full Queue Behavior") {
   TEST_CASE("Enqueue to full queue fails") {
     aipp::SpscQueue<int> queue(aipp::Capacity(static_cast<std::size_t>(2)));
-    CHECK(queue.try_enqueue(1));
-    CHECK(queue.try_enqueue(2));
-    CHECK(!queue.try_enqueue(3));
+    CHECK(atlas_value_for(queue.try_enqueue(1)));
+    CHECK(atlas_value_for(queue.try_enqueue(2)));
+    CHECK(!atlas_value_for(queue.try_enqueue(3)));
   }
 
   TEST_CASE("Queue is full when capacity is reached") {
     aipp::SpscQueue<int> queue(aipp::Capacity(static_cast<std::size_t>(3)));
-    CHECK(!queue.is_full());
-    queue.try_enqueue(1);
-    CHECK(!queue.is_full());
-    queue.try_enqueue(2);
-    CHECK(!queue.is_full());
-    queue.try_enqueue(3);
-    CHECK(queue.is_full());
+    CHECK(!atlas_value_for(queue.producer_side_is_full()));
+    (void)queue.try_enqueue(1);
+    CHECK(!atlas_value_for(queue.producer_side_is_full()));
+    (void)queue.try_enqueue(2);
+    CHECK(!atlas_value_for(queue.producer_side_is_full()));
+    (void)queue.try_enqueue(3);
+    CHECK(atlas_value_for(queue.producer_side_is_full()));
   }
 
   TEST_CASE("After dequeue, space becomes available") {
     aipp::SpscQueue<int> queue(aipp::Capacity(static_cast<std::size_t>(2)));
-    queue.try_enqueue(1);
-    queue.try_enqueue(2);
-    CHECK(queue.is_full());
-    queue.try_dequeue();
-    CHECK(!queue.is_full());
-    CHECK(queue.try_enqueue(3));
+    (void)queue.try_enqueue(1);
+    (void)queue.try_enqueue(2);
+    CHECK(atlas_value_for(queue.producer_side_is_full()));
+    (void)queue.try_dequeue();
+    CHECK(!atlas_value_for(queue.producer_side_is_full()));
+    CHECK(atlas_value_for(queue.try_enqueue(3)));
   }
 
   TEST_CASE("Cannot enqueue when full, but value is not consumed") {
     aipp::SpscQueue<int> queue(aipp::Capacity(static_cast<std::size_t>(1)));
-    queue.try_enqueue(42);
+    (void)queue.try_enqueue(42);
     int original_value = 99;
-    CHECK(!queue.try_enqueue(original_value));
+    CHECK(!atlas_value_for(queue.try_enqueue(original_value)));
     CHECK(original_value == 99); // Value not consumed
   }
 }
@@ -161,7 +166,7 @@ TEST_SUITE("SpscQueue - Large Element Types") {
   TEST_CASE("Enqueue and dequeue large struct") {
     aipp::SpscQueue<LargeType> queue(aipp::Capacity(static_cast<std::size_t>(5)));
     LargeType original(42);
-    CHECK(queue.try_enqueue(original));
+    CHECK(atlas_value_for(queue.try_enqueue(original)));
     auto result = queue.try_dequeue();
     REQUIRE(result.has_value());
     CHECK(result.value().value == 42);
@@ -171,7 +176,7 @@ TEST_SUITE("SpscQueue - Large Element Types") {
     aipp::SpscQueue<LargeType> queue(
         aipp::Capacity(static_cast<std::size_t>(10)));
     for (int i = 0; i < 5; ++i) {
-      CHECK(queue.try_enqueue(LargeType(i)));
+      CHECK(atlas_value_for(queue.try_enqueue(LargeType(i))));
     }
     for (int i = 0; i < 5; ++i) {
       auto result = queue.try_dequeue();
@@ -196,7 +201,13 @@ TEST_SUITE("SpscQueue - Exception Safety") {
       }
     }
 
+    ThrowingType(ThrowingType&& other) noexcept
+        : value(other.value), should_throw(other.should_throw) {
+      other.value = 0;
+    }
+
     ThrowingType& operator=(const ThrowingType& other) = delete;
+    ThrowingType& operator=(ThrowingType&&) = delete;
   };
 
   TEST_CASE("Enqueue with throwing copy constructor") {
@@ -204,13 +215,13 @@ TEST_SUITE("SpscQueue - Exception Safety") {
         aipp::Capacity(static_cast<std::size_t>(5)));
 
     ThrowingType safe_value(42, false);
-    CHECK(queue.try_enqueue(safe_value));
+    CHECK(atlas_value_for(queue.try_enqueue(safe_value)));
 
     ThrowingType throwing_value(99, true);
-    CHECK_THROWS(queue.try_enqueue(throwing_value));
+    CHECK_THROWS(([&]() { (void)queue.try_enqueue(throwing_value); }()));
 
     // Queue should still be functional
-    CHECK(queue.try_enqueue(ThrowingType(100, false)));
+    CHECK(atlas_value_for(queue.try_enqueue(ThrowingType(100, false))));
 
     auto result = queue.try_dequeue();
     REQUIRE(result.has_value());
@@ -220,12 +231,12 @@ TEST_SUITE("SpscQueue - Exception Safety") {
   TEST_CASE("After failed enqueue, queue state unchanged") {
     aipp::SpscQueue<ThrowingType> queue(
         aipp::Capacity(static_cast<std::size_t>(3)));
-    queue.try_enqueue(ThrowingType(1, false));
-    queue.try_enqueue(ThrowingType(2, false));
+    (void)queue.try_enqueue(ThrowingType(1, false));
+    (void)queue.try_enqueue(ThrowingType(2, false));
 
     ThrowingType should_fail(999, true);
-    CHECK_THROWS(queue.try_enqueue(should_fail));
-    CHECK(!queue.is_full()); // Still room for one more (sentinel)
+    CHECK_THROWS(([&]() { (void)queue.try_enqueue(should_fail); }()));
+    CHECK(!atlas_value_for(queue.producer_side_is_full())); // Still room for one more (sentinel)
 
     // Original elements still there
     auto v1 = queue.try_dequeue();
@@ -240,20 +251,20 @@ TEST_SUITE("SpscQueue - Exception Safety") {
 TEST_SUITE("SpscQueue - Capacity One Edge Case") {
   TEST_CASE("Capacity 1 queue (minimal size)") {
     aipp::SpscQueue<int> queue(aipp::Capacity(static_cast<std::size_t>(1)));
-    CHECK(queue.is_empty());
-    CHECK(!queue.is_full());
+    CHECK(atlas_value_for(queue.consumer_side_is_empty()));
+    CHECK(!atlas_value_for(queue.producer_side_is_full()));
 
-    CHECK(queue.try_enqueue(42));
-    CHECK(queue.is_full());
-    CHECK(!queue.is_empty());
+    CHECK(atlas_value_for(queue.try_enqueue(42)));
+    CHECK(atlas_value_for(queue.producer_side_is_full()));
+    CHECK(!atlas_value_for(queue.consumer_side_is_empty()));
 
-    CHECK(!queue.try_enqueue(99)); // Cannot enqueue while full
+    CHECK(!atlas_value_for(queue.try_enqueue(99))); // Cannot enqueue while full
 
     auto result = queue.try_dequeue();
     REQUIRE(result.has_value());
     CHECK(result.value() == 42);
-    CHECK(queue.is_empty());
-    CHECK(!queue.is_full());
+    CHECK(atlas_value_for(queue.consumer_side_is_empty()));
+    CHECK(!atlas_value_for(queue.producer_side_is_full()));
   }
 }
 
@@ -270,7 +281,7 @@ TEST_SUITE("SpscQueue - Multi-threaded Operations") {
 
     std::thread producer([&]() {
       for (int i = 0; i < ITEMS; ++i) {
-        while (!queue.try_enqueue(i)) {
+        while (!atlas_value_for(queue.try_enqueue(i))) {
           std::this_thread::yield();
         }
         produced.store(i + 1, std::memory_order_release);
@@ -293,7 +304,7 @@ TEST_SUITE("SpscQueue - Multi-threaded Operations") {
 
     CHECK(produced.load() == ITEMS);
     CHECK(consumed.load() == ITEMS);
-    CHECK(queue.is_empty());
+    CHECK(atlas_value_for(queue.consumer_side_is_empty()));
   }
 
   TEST_CASE("High-speed producer-consumer") {
@@ -303,7 +314,7 @@ TEST_SUITE("SpscQueue - Multi-threaded Operations") {
 
     std::thread producer([&]() {
       for (int i = 0; i < ITEMS; ++i) {
-        while (!queue.try_enqueue(i)) {
+        while (!atlas_value_for(queue.try_enqueue(i))) {
           // Busy wait
         }
       }
@@ -334,7 +345,7 @@ TEST_SUITE("SpscQueue - Multi-threaded Operations") {
 
     std::thread producer([&]() {
       for (int i = 0; i < 20; ++i) {
-        while (!queue.try_enqueue(i)) {
+        while (!atlas_value_for(queue.try_enqueue(i))) {
           std::this_thread::yield();
         }
         enqueued.fetch_add(1, std::memory_order_release);
@@ -375,7 +386,7 @@ TEST_SUITE("SpscQueue - Property-Based Tests") {
               aipp::Capacity(static_cast<std::size_t>(100)));
 
           for (int v : values) {
-            while (!queue.try_enqueue(v)) {
+            while (!atlas_value_for(queue.try_enqueue(v))) {
               // Ensure all values are enqueued
             }
           }
@@ -398,7 +409,7 @@ TEST_SUITE("SpscQueue - Property-Based Tests") {
                                  values.size() + 1)));
 
                          for (int v : values) {
-                           if (!queue.try_enqueue(v)) {
+                           if (!atlas_value_for(queue.try_enqueue(v))) {
                              return false;
                            }
                          }
@@ -411,7 +422,7 @@ TEST_SUITE("SpscQueue - Property-Based Tests") {
                            }
                          }
 
-                         return queue.is_empty();
+                         return atlas_value_for(queue.consumer_side_is_empty());
                        });
   }
 
@@ -427,8 +438,8 @@ TEST_SUITE("SpscQueue - Property-Based Tests") {
                          std::size_t enqueued = 0;
                          for (std::size_t i = 0;
                               i < cap + 100; ++i) {
-                           if (queue.try_enqueue(
-                                   static_cast<int>(i))) {
+                           if (atlas_value_for(queue.try_enqueue(
+                                   static_cast<int>(i)))) {
                              enqueued++;
                            }
                          }
@@ -459,7 +470,7 @@ TEST_SUITE("SpscQueue - Property-Based Tests") {
               static_cast<std::size_t>(values.size() + 1)));
 
           for (int v : values) {
-            while (!queue.try_enqueue(v)) {
+            while (!atlas_value_for(queue.try_enqueue(v))) {
               // Retry until successful
             }
           }
@@ -473,7 +484,7 @@ TEST_SUITE("SpscQueue - Property-Based Tests") {
             dequeued.push_back(v.value());
           }
 
-          return queue.is_empty() && (dequeued == values);
+          return atlas_value_for(queue.consumer_side_is_empty()) && (dequeued == values);
         });
   }
 }

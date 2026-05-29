@@ -13,3 +13,15 @@ description=std::int64_t; <=>
 # (not including the sentinel slot).
 [class Capacity]
 description=std::size_t; <=>
+
+# Result of try_enqueue: true if element was enqueued, false if queue was full.
+[class EnqueueResult]
+description=bool; <=>
+
+# Result of queue fullness check: true if producer-observed queue is full.
+[class ProducerSideIsFull]
+description=bool; <=>
+
+# Result of queue emptiness check: true if consumer-observed queue is empty.
+[class ConsumerSideIsEmpty]
+description=bool; <=>
